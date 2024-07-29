@@ -1,32 +1,10 @@
+import 'package:cubitapp/cubits/cubit_user_states.dart';
+import 'package:cubitapp/cubits/cubit_users.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../Model/userModel.dart';
-import '../repository/user_repo.dart';
-
-class HomePage extends StatefulWidget {
+class HomePage extends StatelessWidget {
   const HomePage({super.key});
-
-  @override
-  State<HomePage> createState() => _HomePageState();
-}
-
-class _HomePageState extends State<HomePage> {
-  bool isLoading = true;
-  List<UsersModel> users = [];
-  final UsersRepo usersRepo = UsersRepo();
-
-  getUsers() async {
-    users = await usersRepo.getUsers();
-    setState(() {
-      isLoading = false;
-    });
-  }
-
-  @override
-  void initState() {
-    getUsers();
-    super.initState();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,26 +13,37 @@ class _HomePageState extends State<HomePage> {
         title: const Text('Cubit App'),
         centerTitle: true,
       ),
-      body: Padding(
-          padding: const EdgeInsets.only(left: 10, right: 10),
-          child: isLoading
-              ? const Center(
-                  child: CircularProgressIndicator(),
-                )
-              : ListView.builder(
-                  itemCount: users.length,
-                  itemBuilder: (context, index) => Card(
-                    child: ListTile(
-                      leading: const Icon(Icons.person_2_rounded),
-                      title: Text(
-                        users[index].name,
-                        style: const TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.bold),
-                      ),
-                      subtitle: Text(users[index].email),
+      body: BlocBuilder<UserCubit,CubitUserStates>(
+        builder: (context, state) {
+          if (state is CubitUserLoading) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          } else if (state is CubitUserLoaded) {
+            return Padding(
+              padding: const EdgeInsets.only(left: 10, right: 10),
+              child: ListView.builder(
+                itemCount: state.users.length,
+                itemBuilder: (context, index) => Card(
+                  child: ListTile(
+                    leading: const Icon(Icons.person_2_rounded),
+                    title: Text(
+                      state.users[index].name,
+                      style: const TextStyle(
+                          fontSize: 20, fontWeight: FontWeight.bold),
                     ),
+                    subtitle: Text(state.users[index].email),
                   ),
-                )),
+                ),
+              ),
+            );
+          } else {
+            return const Center(
+              child: Text('Something went wrong'),
+            );
+          }
+        },
+      ),
     );
   }
 }
